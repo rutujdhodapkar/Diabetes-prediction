@@ -14,8 +14,26 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Streamlit interface for file upload
 st.title("Diabetes Prediction Model")
-st.write("Upload a CSV file to train and test the model.")
+st.write("Upload a CSV file to train and test the model, or use the form below to predict a new case.")
 
+# Form for model input
+st.sidebar.header("Test Your Model with Input Data")
+
+# Input form for user to predict a new case
+age = st.sidebar.number_input('Age', min_value=0, max_value=120, value=25)
+pregnancies = st.sidebar.number_input('Pregnancies', min_value=0, max_value=20, value=0)
+glucose = st.sidebar.number_input('Glucose', min_value=0, max_value=200, value=100)
+blood_pressure = st.sidebar.number_input('Blood Pressure', min_value=0, max_value=200, value=80)
+bmi = st.sidebar.number_input('BMI', min_value=0.0, max_value=50.0, value=25.0)
+diabetes_pedigree = st.sidebar.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5, value=0.47)
+insulin = st.sidebar.number_input('Insulin', min_value=0, max_value=800, value=100)
+
+# Model prediction based on user input
+input_data = np.array([[age, pregnancies, glucose, blood_pressure, bmi, diabetes_pedigree, insulin]])
+input_data_scaled = StandardScaler().fit_transform(input_data)  # Standardize the input
+input_tensor = torch.tensor(input_data_scaled, dtype=torch.float32).to(device)
+
+# Load dataset and train the model once the user uploads a CSV file
 uploaded_file = st.file_uploader("Choose a file", type=["csv"])
 
 if uploaded_file is not None:
@@ -179,3 +197,12 @@ if uploaded_file is not None:
     # Print total parameters
     total_params = sum(p.numel() for p in model.parameters())
     st.write(f'Total parameters: {total_params}')
+
+    # Make prediction for user input
+    with torch.no_grad():
+        model.eval()
+        prediction = model(input_tensor).squeeze().item()
+        if prediction > 0.5:
+            st.sidebar.write("Prediction: Positive (Diabetic)")
+        else:
+            st.sidebar.write("Prediction: Negative (Not Diabetic)")
