@@ -39,21 +39,21 @@ X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
 y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).to(device)
 y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).to(device)
 
-# Define the Optimized Model with ~800 million parameters
-class OptimizedDiabetesModel(nn.Module):
+# Define the 600 Million Parameters Model
+class DiabetesModel600M(nn.Module):
     def __init__(self):
-        super(OptimizedDiabetesModel, self).__init__()
+        super(DiabetesModel600M, self).__init__()
         
-        # Adjusted model with layers to bring total params to ~800 million
-        self.fc1 = nn.Linear(7, 30000)  # First layer with 30,000 neurons
+        # Model with ~600 million parameters
+        self.fc1 = nn.Linear(7, 50000)  # First layer with 50,000 neurons
         self.dropout1 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(30000, 15000)  # Second layer with 15,000 neurons
+        self.fc2 = nn.Linear(50000, 25000)  # Second layer with 25,000 neurons
         self.dropout2 = nn.Dropout(p=0.5)
-        self.fc3 = nn.Linear(15000, 7500)   # Third layer with 7,500 neurons
-        self.fc4 = nn.Linear(7500, 3000)    # Fourth layer with 3,000 neurons
-        self.fc5 = nn.Linear(3000, 1000)    # Fifth layer with 1,000 neurons
-        self.fc6 = nn.Linear(1000, 400)     # Sixth layer with 400 neurons
-        self.fc7 = nn.Linear(400, 1)        # Output layer
+        self.fc3 = nn.Linear(25000, 12500)   # Third layer with 12,500 neurons
+        self.fc4 = nn.Linear(12500, 5000)    # Fourth layer with 5,000 neurons
+        self.fc5 = nn.Linear(5000, 2000)    # Fifth layer with 2,000 neurons
+        self.fc6 = nn.Linear(2000, 500)     # Sixth layer with 500 neurons
+        self.fc7 = nn.Linear(500, 1)        # Output layer
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -67,8 +67,47 @@ class OptimizedDiabetesModel(nn.Module):
         x = torch.sigmoid(self.fc7(x))  # Sigmoid for binary classification
         return x
 
-# Initialize the model
-model = OptimizedDiabetesModel().to(device)
+# Define the 100 Million Parameters Model
+class DiabetesModel100M(nn.Module):
+    def __init__(self):
+        super(DiabetesModel100M, self).__init__()
+        
+        # Model with ~100 million parameters
+        self.fc1 = nn.Linear(7, 10000)  # First layer with 10,000 neurons
+        self.dropout1 = nn.Dropout(p=0.5)
+        self.fc2 = nn.Linear(10000, 5000)  # Second layer with 5,000 neurons
+        self.dropout2 = nn.Dropout(p=0.5)
+        self.fc3 = nn.Linear(5000, 2500)   # Third layer with 2,500 neurons
+        self.fc4 = nn.Linear(2500, 1000)    # Fourth layer with 1,000 neurons
+        self.fc5 = nn.Linear(1000, 400)    # Fifth layer with 400 neurons
+        self.fc6 = nn.Linear(400, 100)     # Sixth layer with 100 neurons
+        self.fc7 = nn.Linear(100, 1)       # Output layer
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = self.dropout1(x)
+        x = torch.relu(self.fc2(x))
+        x = self.dropout2(x)
+        x = torch.relu(self.fc3(x))
+        x = torch.relu(self.fc4(x))
+        x = torch.relu(self.fc5(x))
+        x = torch.relu(self.fc6(x))
+        x = torch.sigmoid(self.fc7(x))  # Sigmoid for binary classification
+        return x
+
+# Choose the model
+print("Which model would you like to use?")
+print("1. 600 Million Parameters Model")
+print("2. 100 Million Parameters Model")
+choice = input("Enter the number of the model you'd like to use: ")
+
+if choice == "1":
+    model = DiabetesModel600M().to(device)
+elif choice == "2":
+    model = DiabetesModel100M().to(device)
+else:
+    print("Invalid choice. Defaulting to 600 Million Parameters Model.")
+    model = DiabetesModel600M().to(device)
 
 # Define loss function and optimizer with L2 regularization (weight decay)
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # Add weight_decay for L2 regularization
