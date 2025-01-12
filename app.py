@@ -46,10 +46,10 @@ def load_and_prepare_data():
 # Load data and split
 df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
-# Display random 5 lines from the dataset
-st.subheader("Sample Data from the Dataset")
-st.write("Here are 5 random rows from the dataset:")
-st.write(df.sample(5))
+# Display the first 5 rows from the dataset
+st.subheader("First 5 Rows from the Dataset")
+st.write("Here are the first 5 rows from the dataset:")
+st.write(df.head())
 
 # Standardize the data
 scaler = StandardScaler()
