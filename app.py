@@ -30,26 +30,20 @@ class DiabetesModel(nn.Module):
 st.title("Diabetes Prediction App")
 st.write("Predict the likelihood of diabetes based on user input.")
 
-# Data preparation (replace this with actual dataset file if needed)
+# Data preparation (using your diabetes.csv dataset)
 @st.cache_data
 def load_and_prepare_data():
-    # Load your dataset here
-    # For demo, we'll create a sample dataset
-    data = {
-        "Age": np.random.randint(20, 70, 500),
-        "Pregnancies": np.random.randint(0, 10, 500),
-        "Glucose": np.random.uniform(50, 200, 500),
-        "BloodPressure": np.random.uniform(60, 100, 500),
-        "BMI": np.random.uniform(18.5, 40, 500),
-        "DiabetesPedigreeFunction": np.random.uniform(0.1, 2, 500),
-        "Insulin": np.random.uniform(15, 200, 500),
-        "Outcome": np.random.randint(0, 2, 500),
-    }
-    df = pd.DataFrame(data)
+    # Load the dataset (make sure the file is in the correct directory)
+    df = pd.read_csv("diabetes.csv")
+    
+    # Select features and target variable
     X = df[["Age", "Pregnancies", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
     y = df["Outcome"]
+    
+    # Split the data into training and testing sets
     return df, train_test_split(X, y, test_size=0.2, random_state=42)
 
+# Load data and split
 df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
 # Display random 5 lines from the dataset
@@ -104,12 +98,12 @@ glucose = st.sidebar.text_input("Glucose", "100")  # Default value is "100"
 blood_pressure = st.sidebar.text_input("Blood Pressure", "80")  # Default value is "80"
 bmi = st.sidebar.text_input("BMI", "25")  # Default value is "25"
 dpf = st.sidebar.text_input("Diabetes Pedigree Function", "0.5")  # Default value is "0.5"
-insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85")
+insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85"
 
 # Convert user input to numeric values
 try:
     input_data = np.array([[float(age), float(pregnancies), float(glucose), 
-                            float(blood_pressure), float(bmi), float(dpf), float(insulin)]])
+                            float(blood_pressure), float(bmi), float(dpf), float(insulin)]]).reshape(1, -1)
     input_scaled = scaler.transform(input_data)
     input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
     
