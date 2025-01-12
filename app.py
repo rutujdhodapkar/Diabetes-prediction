@@ -117,6 +117,6 @@ try:
             st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
 except ValueError:
     st.error("Please enter valid numeric inputs for all fields.")
-st.write("Model by Rutuj Dhodapkar.")
-st.write("This is just a model and not a definitive diagnostic tool.")
+st.write("Model Developed by Rutuj Dhodapkar.")
+st.write("NOTE:This is just a model and not a definitive diagnostic tool.")
 st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
