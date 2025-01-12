@@ -1,215 +1,123 @@
+import streamlit as st
 import torch
 import torch.nn as nn
-import torch.optim as optim
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+import pickle
 
-# Set your device (GPU or CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Define the neural network model
+class DiabetesModel(nn.Module):
+    def __init__(self):
+        super(DiabetesModel, self).__init__()
+        self.fc1 = nn.Linear(7, 3500)
+        self.dropout1 = nn.Dropout(p=0.5)
+        self.fc2 = nn.Linear(3500, 1500)
+        self.dropout2 = nn.Dropout(p=0.5)
+        self.fc3 = nn.Linear(1500, 1)
 
-# Load your dataset
-df = pd.read_csv('diabetes.csv')
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = self.dropout1(x)
+        x = torch.relu(self.fc2(x))
+        x = self.dropout2(x)
+        x = torch.sigmoid(self.fc3(x))
+        return x
 
-# Prepare data
-class_0_df = df[df['Outcome'] == 0]
-class_1_df = df[df['Outcome'] == 1]
+# Streamlit Title
+st.title("Diabetes Prediction App")
+st.write("Predict the likelihood of diabetes based on user input.")
+st.write("Model by Rutuj Dhodapkar.")
+st.write("This is just a model and not a definitive diagnostic tool.")
+st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
 
-class_0_df = class_0_df.sample(268)  # Balance the dataset
-data = pd.concat([class_0_df, class_1_df])
+# Data preparation (using your diabetes.csv dataset)
+@st.cache_data
+def load_and_prepare_data():
+    # Load the dataset (make sure the file is in the correct directory)
+    df = pd.read_csv("diabetes.csv")
+    
+    # Select features and target variable
+    X = df[["Age", "Pregnancies", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
+    y = df["Outcome"]
+    
+    # Split the data into training and testing sets
+    return df, train_test_split(X, y, test_size=0.2, random_state=42)
 
-col_name = ['Age', 'Pregnancies', 'Glucose', 'BloodPressure', 'BMI', 'DiabetesPedigreeFunction', 'Insulin']
-X = data[col_name]
-y = data['Outcome']
+# Load data and split
+df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Display the first 5 rows from the dataset
+st.subheader("First 5 Rows from the Dataset")
+st.write("Here are the first 5 rows from the dataset:")
+st.write(df.head())
 
 # Standardize the data
 scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Save the scaler
+with open("scaler.pkl", "wb") as f:
+    pickle.dump(scaler, f)
 
 # Convert to PyTorch tensors
-X_train_tensor = torch.tensor(X_train, dtype=torch.float32).to(device)
-X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+device = torch.device("cpu")
+X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32).to(device)
+X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32).to(device)
 y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).to(device)
 y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).to(device)
 
-# Define the 600 Million Parameters Model
-class DiabetesModel600M(nn.Module):
-    def __init__(self):
-        super(DiabetesModel600M, self).__init__()
-        
-        # Model with ~600 million parameters
-        self.fc1 = nn.Linear(7, 50000)  # First layer with 50,000 neurons
-        self.dropout1 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(50000, 25000)  # Second layer with 25,000 neurons
-        self.dropout2 = nn.Dropout(p=0.5)
-        self.fc3 = nn.Linear(25000, 12500)   # Third layer with 12,500 neurons
-        self.fc4 = nn.Linear(12500, 5000)    # Fourth layer with 5,000 neurons
-        self.fc5 = nn.Linear(5000, 2000)    # Fifth layer with 2,000 neurons
-        self.fc6 = nn.Linear(2000, 500)     # Sixth layer with 500 neurons
-        self.fc7 = nn.Linear(500, 1)        # Output layer
-
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.dropout1(x)
-        x = torch.relu(self.fc2(x))
-        x = self.dropout2(x)
-        x = torch.relu(self.fc3(x))
-        x = torch.relu(self.fc4(x))
-        x = torch.relu(self.fc5(x))
-        x = torch.relu(self.fc6(x))
-        x = torch.sigmoid(self.fc7(x))  # Sigmoid for binary classification
-        return x
-
-# Define the 100 Million Parameters Model
-class DiabetesModel100M(nn.Module):
-    def __init__(self):
-        super(DiabetesModel100M, self).__init__()
-        
-        # Model with ~100 million parameters
-        self.fc1 = nn.Linear(7, 10000)  # First layer with 10,000 neurons
-        self.dropout1 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(10000, 5000)  # Second layer with 5,000 neurons
-        self.dropout2 = nn.Dropout(p=0.5)
-        self.fc3 = nn.Linear(5000, 2500)   # Third layer with 2,500 neurons
-        self.fc4 = nn.Linear(2500, 1000)    # Fourth layer with 1,000 neurons
-        self.fc5 = nn.Linear(1000, 400)    # Fifth layer with 400 neurons
-        self.fc6 = nn.Linear(400, 100)     # Sixth layer with 100 neurons
-        self.fc7 = nn.Linear(100, 1)       # Output layer
-
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.dropout1(x)
-        x = torch.relu(self.fc2(x))
-        x = self.dropout2(x)
-        x = torch.relu(self.fc3(x))
-        x = torch.relu(self.fc4(x))
-        x = torch.relu(self.fc5(x))
-        x = torch.relu(self.fc6(x))
-        x = torch.sigmoid(self.fc7(x))  # Sigmoid for binary classification
-        return x
-
-# Ask user which model to use
-print("Which model would you like to use?")
-print("1. 600 Million Parameters Model")
-print("2. 100 Million Parameters Model")
-choice = input("Enter the number of the model you'd like to use: ")
-
-# Initialize the chosen model
-if choice == "1":
-    model = DiabetesModel600M().to(device)
-    print("Using the 600 Million Parameters Model...")
-elif choice == "2":
-    model = DiabetesModel100M().to(device)
-    print("Using the 100 Million Parameters Model...")
-else:
-    print("Invalid choice. Defaulting to 600 Million Parameters Model.")
-    model = DiabetesModel600M().to(device)
-
-# Define loss function and optimizer with L2 regularization (weight decay)
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # Add weight_decay for L2 regularization
+# Train the model if not already trained
+model = DiabetesModel().to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.BCELoss()
 
-# Track training and test losses
-train_losses = []
-test_losses = []
-train_accuracies = []
-test_accuracies = []
+if "model_trained" not in st.session_state:
+    st.write("Training the model. Please wait...")
+    for epoch in range(10):  # Train for fewer epochs for simplicity
+        model.train()
+        optimizer.zero_grad()
+        y_pred_train = model(X_train_tensor).squeeze()
+        loss = criterion(y_pred_train, y_train_tensor)
+        loss.backward()
+        optimizer.step()
 
-# Training loop with Early Stopping
-epochs = 100
-best_test_loss = float('inf')
-patience = 10  # Early stopping patience (epochs without improvement)
-patience_counter = 0
+    torch.save(model.state_dict(), "model.pth")
+    st.session_state["model_trained"] = True
+    st.write("Model trained and saved!")
 
-for epoch in range(epochs):
-    model.train()
-    
-    # Forward pass on training data
-    y_pred_train = model(X_train_tensor).squeeze()
-    loss_train = criterion(y_pred_train, y_train_tensor)
-    
-    # Backward pass and optimization
-    optimizer.zero_grad()
-    loss_train.backward()
-    optimizer.step()
-
-    # Track train loss and accuracy
-    train_losses.append(loss_train.item())
-    train_accuracy = accuracy_score(y_train_tensor.cpu(), (y_pred_train > 0.5).float().cpu())
-    train_accuracies.append(train_accuracy)
-
-    # Evaluate on test data
-    model.eval()
-    with torch.no_grad():
-        y_pred_test = model(X_test_tensor).squeeze()
-        loss_test = criterion(y_pred_test, y_test_tensor)
-        
-        # Track test loss and accuracy
-        test_losses.append(loss_test.item())
-        test_accuracy = accuracy_score(y_test_tensor.cpu(), (y_pred_test > 0.5).float().cpu())
-        test_accuracies.append(test_accuracy)
-
-    # Check early stopping
-    if loss_test < best_test_loss:
-        best_test_loss = loss_test
-        patience_counter = 0  # Reset the patience counter
-    else:
-        patience_counter += 1
-
-    if patience_counter >= patience:
-        print(f'Early stopping at epoch {epoch+1}')
-        break
-
-    if epoch % 10 == 0:
-        print(f'Epoch [{epoch+1}/{epochs}], Train Loss: {loss_train.item():.4f}, Test Loss: {loss_test.item():.4f}')
-
-# Evaluate final accuracy on test data
+# Load the model for prediction
+model.load_state_dict(torch.load("model.pth", map_location=torch.device("cpu")))
 model.eval()
-with torch.no_grad():
-    y_pred_test = model(X_test_tensor).squeeze()
-    y_pred_test = (y_pred_test > 0.5).float()  # Apply threshold of 0.5
+
+# User Input (Text Boxes for User Input)
+st.sidebar.header("Input Features")
+age = st.sidebar.text_input("Age", "30")  # Default value is "30"
+pregnancies = st.sidebar.text_input("Pregnancies", "1")  # Default value is "1"
+glucose = st.sidebar.text_input("Glucose", "100")  # Default value is "100"
+blood_pressure = st.sidebar.text_input("Blood Pressure", "80")  # Default value is "80"
+bmi = st.sidebar.text_input("BMI", "25")  # Default value is "25"
+dpf = st.sidebar.text_input("Diabetes Pedigree Function", "0.5")  # Default value is "0.5"
+insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85"
+
+# Convert user input to numeric values
+try:
+    input_data = np.array([[float(age), float(pregnancies), float(glucose), 
+                            float(blood_pressure), float(bmi), float(dpf), float(insulin)]]).reshape(1, -1)
+    input_scaled = scaler.transform(input_data)
+    input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
     
-    accuracy = accuracy_score(y_test_tensor.cpu(), y_pred_test.cpu())
-    conf_matrix = confusion_matrix(y_test_tensor.cpu(), y_pred_test.cpu())
-    class_report = classification_report(y_test_tensor.cpu(), y_pred_test.cpu())
+    # Prediction
+    if st.button("Predict"):
+        with torch.no_grad():
+            prediction = model(input_tensor).item()
+        if prediction > 0.5:
+            st.error(f"High likelihood of diabetes! Probability: {prediction:.2f}")
+        else:
+            st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
+except ValueError:
+    st.error("Please enter valid numeric inputs for all fields.")
 
-    print(f'Accuracy: {accuracy:.2f}')
-    print('Confusion Matrix:')
-    print(conf_matrix)
-    print('Classification Report:')
-    print(class_report)
-
-# Plotting the losses and accuracies to check for overfitting
-plt.figure(figsize=(12, 6))
-
-# Plot Losses
-plt.subplot(1, 2, 1)
-plt.plot(range(len(train_losses)), train_losses, label='Train Loss')
-plt.plot(range(len(test_losses)), test_losses, label='Test Loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-plt.title('Train vs Test Loss')
-plt.legend()
-
-# Plot Accuracies
-plt.subplot(1, 2, 2)
-plt.plot(range(len(train_accuracies)), train_accuracies, label='Train Accuracy')
-plt.plot(range(len(test_accuracies)), test_accuracies, label='Test Accuracy')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.title('Train vs Test Accuracy')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
-
-# Print total parameters
-total_params = sum(p.numel() for p in model.parameters())
-print(f'Total parameters: {total_params}')
