@@ -28,10 +28,7 @@ class DiabetesModel(nn.Module):
 
 # Streamlit Title
 st.title("Diabetes Prediction App")
-st.write("Predict the likelihood of diabetes based on user input.")
-st.write("Model by Rutuj Dhodapkar.")
-st.write("This is just a model and not a definitive diagnostic tool.")
-st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
+
 
 # Data preparation (using your diabetes.csv dataset)
 @st.cache_data
@@ -120,4 +117,6 @@ try:
             st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
 except ValueError:
     st.error("Please enter valid numeric inputs for all fields.")
-
+st.write("Model by Rutuj Dhodapkar.")
+st.write("This is just a model and not a definitive diagnostic tool.")
+st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
