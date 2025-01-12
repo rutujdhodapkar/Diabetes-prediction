@@ -48,9 +48,14 @@ def load_and_prepare_data():
     df = pd.DataFrame(data)
     X = df[["Age", "Pregnancies", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
     y = df["Outcome"]
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+    return df, train_test_split(X, y, test_size=0.2, random_state=42)
 
-X_train, X_test, y_train, y_test = load_and_prepare_data()
+df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
+
+# Display random 5 lines from the dataset
+st.subheader("Sample Data from the Dataset")
+st.write("Here are 5 random rows from the dataset:")
+st.write(df.sample(5))
 
 # Standardize the data
 scaler = StandardScaler()
@@ -91,25 +96,30 @@ if "model_trained" not in st.session_state:
 model.load_state_dict(torch.load("model.pth", map_location=torch.device("cpu")))
 model.eval()
 
-# User Input
+# User Input (Text Boxes for User Input)
 st.sidebar.header("Input Features")
-age = st.sidebar.slider("Age", 10, 100, 30)
-pregnancies = st.sidebar.slider("Pregnancies", 0, 20, 1)
-glucose = st.sidebar.slider("Glucose", 50.0, 200.0, 100.0)
-blood_pressure = st.sidebar.slider("Blood Pressure", 40.0, 140.0, 80.0)
-bmi = st.sidebar.slider("BMI", 10.0, 50.0, 25.0)
-dpf = st.sidebar.slider("Diabetes Pedigree Function", 0.1, 2.5, 0.5)
-insulin = st.sidebar.slider("Insulin", 15.0, 300.0, 85.0)
+age = st.sidebar.text_input("Age", "30")  # Default value is "30"
+pregnancies = st.sidebar.text_input("Pregnancies", "1")  # Default value is "1"
+glucose = st.sidebar.text_input("Glucose", "100")  # Default value is "100"
+blood_pressure = st.sidebar.text_input("Blood Pressure", "80")  # Default value is "80"
+bmi = st.sidebar.text_input("BMI", "25")  # Default value is "25"
+dpf = st.sidebar.text_input("Diabetes Pedigree Function", "0.5")  # Default value is "0.5"
+insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85")
 
-input_data = np.array([[age, pregnancies, glucose, blood_pressure, bmi, dpf, insulin]])
-input_scaled = scaler.transform(input_data)
-input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
-
-# Prediction
-if st.button("Predict"):
-    with torch.no_grad():
-        prediction = model(input_tensor).item()
-    if prediction > 0.5:
-        st.error(f"High likelihood of diabetes! Probability: {prediction:.2f}")
-    else:
-        st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
+# Convert user input to numeric values
+try:
+    input_data = np.array([[float(age), float(pregnancies), float(glucose), 
+                            float(blood_pressure), float(bmi), float(dpf), float(insulin)]])
+    input_scaled = scaler.transform(input_data)
+    input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
+    
+    # Prediction
+    if st.button("Predict"):
+        with torch.no_grad():
+            prediction = model(input_tensor).item()
+        if prediction > 0.5:
+            st.error(f"High likelihood of diabetes! Probability: {prediction:.2f}")
+        else:
+            st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
+except ValueError:
+    st.error("Please enter valid numeric inputs for all fields.")
