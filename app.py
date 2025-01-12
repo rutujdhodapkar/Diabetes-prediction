@@ -47,8 +47,7 @@ def load_and_prepare_data():
 df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
 # Display the first 5 rows from the dataset
-st.subheader("First 5 Rows from the Dataset")
-st.write("Here are the first 5 rows from the dataset:")
+st.write("first 5 rows from the dataset:")
 st.write(df.head())
 
 # Standardize the data
