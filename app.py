@@ -139,6 +139,10 @@ if st.button(f"Train {model_name}"):
     train_losses, test_losses, train_accuracies, test_accuracies = train_model()
     st.write(f"{model_name} trained successfully!")
     
+    # Total Parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    st.write(f"Total Parameters in {model_name}: {total_params}")
+
     # Plot Losses and Accuracies
     plt.figure(figsize=(12, 6))
     
