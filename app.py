@@ -47,7 +47,7 @@ def load_and_prepare_data():
 df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
 # Display the first 5 rows from the dataset
-st.write("first 5 rows from the dataset:")
+st.write("First 5 rows from the dataset:")
 st.write(df.head())
 
 # Standardize the data
@@ -89,6 +89,24 @@ if "model_trained" not in st.session_state:
 model.load_state_dict(torch.load("model.pth", map_location=torch.device("cpu")))
 model.eval()
 
+# Calculate total number of parameters
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters())
+
+total_params = count_parameters(model)
+st.write(f"Total parameters in the model: {total_params}")
+
+# Get predictions on the test set
+model.eval()
+with torch.no_grad():
+    y_pred_test = model(X_test_tensor).squeeze()
+    # Convert probabilities to binary values (0 or 1)
+    y_pred_test_bin = (y_pred_test > 0.5).float()
+
+# Compute accuracy
+accuracy = accuracy_score(y_test, y_pred_test_bin.cpu())  # Use .cpu() if you're working on CPU
+st.write(f"Accuracy of the model: {accuracy * 100:.2f}%")
+
 # User Input (Text Boxes for User Input)
 st.sidebar.header("Input Features")
 age = st.sidebar.text_input("Age", "30")  # Default value is "30"
@@ -116,6 +134,7 @@ try:
             st.success(f"Low likelihood of diabetes. Probability: {prediction:.2f}")
 except ValueError:
     st.error("Please enter valid numeric inputs for all fields.")
+
 st.write("Model Developed by Rutuj Dhodapkar.")
-st.write("NOTE:This is just a model and not a definitive diagnostic tool.")
+st.write("NOTE: This is just a model and not a definitive diagnostic tool.")
 st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
