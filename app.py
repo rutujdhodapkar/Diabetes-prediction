@@ -95,16 +95,19 @@ class DiabetesModel100M(nn.Module):
         x = torch.sigmoid(self.fc7(x))  # Sigmoid for binary classification
         return x
 
-# Choose the model
+# Ask user which model to use
 print("Which model would you like to use?")
 print("1. 600 Million Parameters Model")
 print("2. 100 Million Parameters Model")
 choice = input("Enter the number of the model you'd like to use: ")
 
+# Initialize the chosen model
 if choice == "1":
     model = DiabetesModel600M().to(device)
+    print("Using the 600 Million Parameters Model...")
 elif choice == "2":
     model = DiabetesModel100M().to(device)
+    print("Using the 100 Million Parameters Model...")
 else:
     print("Invalid choice. Defaulting to 600 Million Parameters Model.")
     model = DiabetesModel600M().to(device)
