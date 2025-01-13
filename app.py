@@ -8,11 +8,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 import pickle
 
-# Define the neural network model
+
 class DiabetesModel(nn.Module):
     def __init__(self):
         super(DiabetesModel, self).__init__()
-        self.fc1 = nn.Linear(6, 3500)  # Changed input size from 7 to 6
+        self.fc1 = nn.Linear(6, 3500)  
         self.dropout1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(3500, 1500)
         self.dropout2 = nn.Dropout(p=0.5)
@@ -26,53 +26,46 @@ class DiabetesModel(nn.Module):
         x = torch.sigmoid(self.fc3(x))
         return x
 
-# Streamlit Title
+
 st.title("Diabetes Prediction App")
 
-# Data preparation (using your diabetes.csv dataset)
+
 @st.cache_data
 def load_and_prepare_data():
-    # Load the dataset
+
     df = pd.read_csv("diabetes.csv")
 
-    # Select features and target variable, exclude 'Pregnancies'
     X = df[["Age", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
     y = df["Outcome"]
 
-    # Split the data into training and testing sets
     return df, train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Load data and split
 df, (X_train, X_test, y_train, y_test) = load_and_prepare_data()
 
-# Display the first 5 rows from the dataset
 st.write("First 5 rows from the dataset:")
 st.write(df.head())
 
-# Standardize the data
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Save the scaler
 with open("scaler.pkl", "wb") as f:
     pickle.dump(scaler, f)
 
-# Convert to PyTorch tensors
 device = torch.device("cpu")
 X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32).to(device)
 X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32).to(device)
 y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).to(device)
 y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).to(device)
 
-# Train the model if not already trained
+
 model = DiabetesModel().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.BCELoss()
 
 if "model_trained" not in st.session_state:
     st.write("Training the model. Please wait...")
-    for epoch in range(10):  # Train for fewer epochs for simplicity
+    for epoch in range(10):  
         model.train()
         optimizer.zero_grad()
         y_pred_train = model(X_train_tensor).squeeze()
@@ -84,29 +77,26 @@ if "model_trained" not in st.session_state:
     st.session_state["model_trained"] = True
     st.write("Model trained and saved!")
 
-# Load the model for prediction
 model.load_state_dict(torch.load("model.pth", map_location=torch.device("cpu")))
 model.eval()
 
-# Calculate total number of parameters
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
 
 total_params = count_parameters(model)
 st.write(f"Total parameters in the model: {total_params}")
 
-# Get predictions on the test set
 model.eval()
 with torch.no_grad():
     y_pred_test = model(X_test_tensor).squeeze()
-    # Convert probabilities to binary values (0 or 1)
+    
     y_pred_test_bin = (y_pred_test > 0.5).float()
 
-# Compute accuracy
-accuracy = accuracy_score(y_test, y_pred_test_bin.cpu())  # Use .cpu() if you're working on CPU
+
+accuracy = accuracy_score(y_test, y_pred_test_bin.cpu())  
 st.write(f"Accuracy of the model: {accuracy * 100:.2f}%")
 
-# User Input (Text Boxes for User Input)
+
 st.sidebar.header("Input Features")
 age = st.sidebar.text_input("Age", "30")  # Default value is "30"
 glucose = st.sidebar.text_input("Glucose", "100")  # Default value is "100"
@@ -115,14 +105,14 @@ bmi = st.sidebar.text_input("BMI", "25")  # Default value is "25"
 dpf = st.sidebar.text_input("Diabetes Pedigree Function", "0.5")  # Default value is "0.5"
 insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85"
 
-# Convert user input to numeric values
+
 try:
     input_data = np.array([[float(age), float(glucose), float(blood_pressure), 
                             float(bmi), float(dpf), float(insulin)]]).reshape(1, -1)
     input_scaled = scaler.transform(input_data)
     input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
 
-    # Prediction
+
     if st.button("Predict"):
         with torch.no_grad():
             prediction = model(input_tensor).item()
