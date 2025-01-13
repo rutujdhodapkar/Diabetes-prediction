@@ -12,7 +12,7 @@ import pickle
 class DiabetesModel(nn.Module):
     def __init__(self):
         super(DiabetesModel, self).__init__()
-        self.fc1 = nn.Linear(7, 3500)
+        self.fc1 = nn.Linear(6, 3500)  # Changed input size from 7 to 6
         self.dropout1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(3500, 1500)
         self.dropout2 = nn.Dropout(p=0.5)
@@ -29,17 +29,16 @@ class DiabetesModel(nn.Module):
 # Streamlit Title
 st.title("Diabetes Prediction App")
 
-
 # Data preparation (using your diabetes.csv dataset)
 @st.cache_data
 def load_and_prepare_data():
-    # Load the dataset (make sure the file is in the correct directory)
+    # Load the dataset
     df = pd.read_csv("diabetes.csv")
-    
-    # Select features and target variable
-    X = df[["Age", "Pregnancies", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
+
+    # Select features and target variable, exclude 'Pregnancies'
+    X = df[["Age", "Glucose", "BloodPressure", "BMI", "DiabetesPedigreeFunction", "Insulin"]]
     y = df["Outcome"]
-    
+
     # Split the data into training and testing sets
     return df, train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -110,7 +109,6 @@ st.write(f"Accuracy of the model: {accuracy * 100:.2f}%")
 # User Input (Text Boxes for User Input)
 st.sidebar.header("Input Features")
 age = st.sidebar.text_input("Age", "30")  # Default value is "30"
-pregnancies = st.sidebar.text_input("Pregnancies", "1")  # Default value is "1"
 glucose = st.sidebar.text_input("Glucose", "100")  # Default value is "100"
 blood_pressure = st.sidebar.text_input("Blood Pressure", "80")  # Default value is "80"
 bmi = st.sidebar.text_input("BMI", "25")  # Default value is "25"
@@ -119,11 +117,11 @@ insulin = st.sidebar.text_input("Insulin", "85")  # Default value is "85"
 
 # Convert user input to numeric values
 try:
-    input_data = np.array([[float(age), float(pregnancies), float(glucose), 
-                            float(blood_pressure), float(bmi), float(dpf), float(insulin)]]).reshape(1, -1)
+    input_data = np.array([[float(age), float(glucose), float(blood_pressure), 
+                            float(bmi), float(dpf), float(insulin)]]).reshape(1, -1)
     input_scaled = scaler.transform(input_data)
     input_tensor = torch.tensor(input_scaled, dtype=torch.float32)
-    
+
     # Prediction
     if st.button("Predict"):
         with torch.no_grad():
