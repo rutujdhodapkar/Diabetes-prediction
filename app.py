@@ -7,6 +7,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 import pandas as pd
 import numpy as np
 import streamlit as st
+from torchsummary import summary
 
 # Set your device (GPU or CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,14 +47,16 @@ y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).to(device)
 class DiabetesModelBig(nn.Module):
     def __init__(self):
         super(DiabetesModelBig, self).__init__()
-        self.fc1 = nn.Linear(7, 20000)
+        self.fc1 = nn.Linear(7, 50000)  # Increased number of neurons
         self.dropout1 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(20000, 15000)
+        self.fc2 = nn.Linear(50000, 100000)  # Increased number of neurons
         self.dropout2 = nn.Dropout(p=0.5)
-        self.fc3 = nn.Linear(15000, 10000)
+        self.fc3 = nn.Linear(100000, 150000)  # Increased number of neurons
         self.dropout3 = nn.Dropout(p=0.5)
-        self.fc4 = nn.Linear(10000, 1)
-        
+        self.fc4 = nn.Linear(150000, 300000)  # Increased number of neurons to reach close to 300M parameters
+        self.dropout4 = nn.Dropout(p=0.5)
+        self.fc5 = nn.Linear(300000, 1)  # Output layer
+
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = self.dropout1(x)
@@ -61,11 +64,16 @@ class DiabetesModelBig(nn.Module):
         x = self.dropout2(x)
         x = torch.relu(self.fc3(x))
         x = self.dropout3(x)
-        x = torch.sigmoid(self.fc4(x))
+        x = torch.relu(self.fc4(x))
+        x = self.dropout4(x)
+        x = torch.sigmoid(self.fc5(x))
         return x
 
 # Initialize the model
 model = DiabetesModelBig().to(device)
+
+# Print summary of the model to check the parameter count
+summary(model, input_size=(1, 7))  # 7 features as input
 
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # L2 regularization
@@ -120,7 +128,7 @@ with torch.no_grad():
     class_report = classification_report(y_test_tensor.cpu(), y_pred_test.cpu())
 
 # Streamlit Deployment
-st.title("Diabetes Prediction with 600M Parameters!")
+st.title("Diabetes Prediction with 300M Parameters!")
 st.write("Accuracy on Test Data:", accuracy)
 st.write("Confusion Matrix:")
 st.write(conf_matrix)
