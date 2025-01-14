@@ -13,7 +13,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load your dataset (replace with your actual dataset)
 # Example dataset loading (modify as needed)
-df = pd.read_csv('your_dataset.csv')  # Ensure the file is in the Streamlit cloud folder
+df = pd.read_csv('Diabetes.csv')  # Ensure the file is in the Streamlit cloud folder
 
 # Preprocess data
 class_0_df = df[df['Outcome'] == 0]
