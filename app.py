@@ -27,7 +27,7 @@ class DiabetesModel(nn.Module):
         return x
 
 
-st.title("Diabetes Prediction App")
+st.title("Diabetes Detection App")
 
 
 @st.cache_data
@@ -123,6 +123,4 @@ try:
 except ValueError:
     st.error("Please enter valid numeric inputs for all fields.")
 
-st.write("Model Developed by Rutuj Dhodapkar.")
-st.write("NOTE: This is just a model and not a definitive diagnostic tool.")
-st.write("© 2025 Rutuj Dhodapkar. All rights reserved.")
+st.write("NOTE: This is just a demo model and not a definitive diagnostic tool.")
